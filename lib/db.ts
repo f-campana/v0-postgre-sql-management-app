@@ -27,13 +27,15 @@ export function createConnection(config: DatabaseConfig) {
       database: config.database,
       username: config.user,
       password: config.password,
-      ssl: "require", // Require SSL for cloud providers
+      ssl: config.host.includes("supabase.com") ? "prefer" : "require",
       max: 10,
       idle_timeout: 30,
-      connect_timeout: 10,
+      connect_timeout: 30,
+      prepare: false, // Disable prepared statements for poolers
       connection: {
         application_name: "v0-postgres-manager",
       },
+      onnotice: () => {}, // Suppress notices
     })
 
     return sql
@@ -57,6 +59,12 @@ export async function testConnection(config: DatabaseConfig): Promise<boolean> {
 
   try {
     console.log("[v0] Testing connection to:", config.host)
+    console.log("[v0] Connection details:", {
+      host: config.host,
+      port: config.port,
+      database: config.database,
+      user: config.user,
+    })
 
     testSql = postgres({
       host: config.host,
@@ -64,23 +72,36 @@ export async function testConnection(config: DatabaseConfig): Promise<boolean> {
       database: config.database,
       username: config.user,
       password: config.password,
-      ssl: "require", // Require SSL for cloud providers
+      ssl: config.host.includes("supabase.com") ? "prefer" : "require",
       max: 1,
-      connect_timeout: 10,
+      connect_timeout: 30,
+      prepare: false, // Disable prepared statements for connection poolers
       connection: {
         application_name: "v0-postgres-manager-test",
       },
+      onnotice: () => {}, // Suppress notices
+      debug: (connection, query, params) => {
+        console.log("[v0] Debug:", { query, params })
+      },
     })
 
-    const result = await testSql`SELECT NOW()`
+    console.log("[v0] Executing test query...")
+    const result = await testSql`SELECT NOW() as current_time, version() as pg_version`
     console.log("[v0] Connection test successful:", result)
-    await testSql.end({ timeout: 2 })
+    await testSql.end({ timeout: 5 })
     return true
   } catch (error) {
     console.error("[v0] Connection test failed:", error)
+    if (error && typeof error === "object") {
+      console.error("[v0] Error details:", {
+        message: (error as any).message,
+        code: (error as any).code,
+        severity: (error as any).severity,
+      })
+    }
     if (testSql) {
       try {
-        await testSql.end({ timeout: 2 })
+        await testSql.end({ timeout: 5 })
       } catch (e) {
         // Ignore cleanup errors
       }
