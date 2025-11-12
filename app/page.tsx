@@ -5,6 +5,7 @@ import { Header } from "@/components/header"
 import { DatabaseSidebar } from "@/components/database-sidebar"
 import { SqlEditor } from "@/components/sql-editor"
 import { ResultsPanel } from "@/components/results-panel"
+import { PreviewModeBanner } from "@/components/preview-mode-banner"
 import type { QueryResult } from "@/lib/types"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -14,6 +15,7 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <Header />
+      <PreviewModeBanner />
 
       <div className="flex-1 flex overflow-hidden">
         <DatabaseSidebar />

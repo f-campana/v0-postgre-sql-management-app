@@ -1,11 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getPool } from "@/lib/db"
+import { getConnection, isPreviewMode } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
-    const pool = getPool()
+    if (isPreviewMode()) {
+      return NextResponse.json(
+        {
+          error: "Query execution is disabled in preview mode. Deploy to Vercel to use this feature.",
+        },
+        { status: 400 },
+      )
+    }
 
-    if (!pool) {
+    const sql = getConnection()
+
+    if (!sql) {
       return NextResponse.json({ error: "Database not connected" }, { status: 400 })
     }
 
@@ -16,13 +25,13 @@ export async function POST(request: NextRequest) {
     }
 
     const startTime = Date.now()
-    const result = await pool.query(query)
+    const result = await sql.unsafe(query)
     const executionTime = Date.now() - startTime
 
     return NextResponse.json({
-      rows: result.rows,
-      rowCount: result.rowCount,
-      fields: result.fields?.map((f) => ({ name: f.name, dataTypeID: f.dataTypeID })),
+      rows: result,
+      rowCount: result.length,
+      fields: result.length > 0 ? Object.keys(result[0]).map((name) => ({ name })) : [],
       executionTime,
     })
   } catch (error) {

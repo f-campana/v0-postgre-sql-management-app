@@ -16,8 +16,7 @@
     "lucide-react": "^0.454.0",
     "next": "16.0.1",
     "next-themes": "latest",
-    "pg": "latest",
-    "pg-native": "latest",
+    "postgres": "latest",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "tailwind-merge": "^2.5.5",
@@ -31,7 +30,7 @@
     "@types/react": "19.2.3",
     "@types/react-dom": "19.2.3",
     "postcss": "^8.5",
-    "tailwindcss": "4.1.17",
+    "tailwindcss": "^4.1.9",
     "typescript": "^5"
   }
 }

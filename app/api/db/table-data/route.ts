@@ -1,14 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getPool } from "@/lib/db"
+import { getConnection, isPreviewMode } from "@/lib/db"
+import { mockTableData } from "@/lib/mock-data"
 
 export async function GET(request: NextRequest) {
   try {
-    const pool = getPool()
-
-    if (!pool) {
-      return NextResponse.json({ error: "Database not connected" }, { status: 400 })
-    }
-
     const schema = request.nextUrl.searchParams.get("schema") || "public"
     const table = request.nextUrl.searchParams.get("table")
     const page = Number.parseInt(request.nextUrl.searchParams.get("page") || "1")
@@ -18,17 +13,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Table name is required" }, { status: 400 })
     }
 
+    if (isPreviewMode()) {
+      const data = mockTableData[table as keyof typeof mockTableData] || []
+      const offset = (page - 1) * limit
+      const paginatedData = data.slice(offset, offset + limit)
+
+      return NextResponse.json({
+        data: paginatedData,
+        totalCount: data.length,
+        page,
+        limit,
+        totalPages: Math.ceil(data.length / limit),
+      })
+    }
+
+    const sql = getConnection()
+
+    if (!sql) {
+      return NextResponse.json({ error: "Database not connected" }, { status: 400 })
+    }
+
     const offset = (page - 1) * limit
 
     // Get total count
-    const countResult = await pool.query(`SELECT COUNT(*) as count FROM "${schema}"."${table}"`)
-    const totalCount = Number.parseInt(countResult.rows[0].count)
+    const countResult = await sql.unsafe(`SELECT COUNT(*) as count FROM "${schema}"."${table}"`)
+    const totalCount = Number.parseInt(countResult[0].count)
 
     // Get data
-    const dataResult = await pool.query(`SELECT * FROM "${schema}"."${table}" LIMIT $1 OFFSET $2`, [limit, offset])
+    const dataResult = await sql.unsafe(`SELECT * FROM "${schema}"."${table}" LIMIT $1 OFFSET $2`, [limit, offset])
 
     return NextResponse.json({
-      data: dataResult.rows,
+      data: dataResult,
       totalCount,
       page,
       limit,

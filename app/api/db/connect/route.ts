@@ -1,8 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { testConnection, createPool } from "@/lib/db"
+import { testConnection, createConnection, isPreviewMode } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
+    if (isPreviewMode()) {
+      console.log("[v0] Preview mode: Simulating successful connection")
+      return NextResponse.json({ success: true, previewMode: true })
+    }
+
     const body = await request.json()
     const { host, port, database, user, password } = body
 
@@ -18,13 +23,14 @@ export async function POST(request: NextRequest) {
       password,
     }
 
+    console.log("[v0] Testing database connection...")
     const isValid = await testConnection(config)
 
     if (!isValid) {
       return NextResponse.json({ error: "Failed to connect to database" }, { status: 400 })
     }
 
-    createPool(config)
+    createConnection(config)
 
     return NextResponse.json({ success: true })
   } catch (error) {

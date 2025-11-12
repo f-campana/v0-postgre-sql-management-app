@@ -1,11 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getPool } from "@/lib/db"
+import { getConnection, isPreviewMode } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
-    const pool = getPool()
+    if (isPreviewMode()) {
+      return NextResponse.json(
+        {
+          error: "Data editing is disabled in preview mode. Deploy to Vercel to use this feature.",
+        },
+        { status: 400 },
+      )
+    }
 
-    if (!pool) {
+    const sql = getConnection()
+
+    if (!sql) {
       return NextResponse.json({ error: "Database not connected" }, { status: 400 })
     }
 
@@ -25,9 +34,9 @@ export async function POST(request: NextRequest) {
       RETURNING *
     `
 
-    const result = await pool.query(query, values)
+    const result = await sql.unsafe(query, values)
 
-    return NextResponse.json({ row: result.rows[0] })
+    return NextResponse.json({ row: result[0] })
   } catch (error) {
     console.error("[v0] Error inserting row:", error)
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 })
@@ -36,9 +45,18 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const pool = getPool()
+    if (isPreviewMode()) {
+      return NextResponse.json(
+        {
+          error: "Data editing is disabled in preview mode. Deploy to Vercel to use this feature.",
+        },
+        { status: 400 },
+      )
+    }
 
-    if (!pool) {
+    const sql = getConnection()
+
+    if (!sql) {
       return NextResponse.json({ error: "Database not connected" }, { status: 400 })
     }
 
@@ -63,9 +81,9 @@ export async function PUT(request: NextRequest) {
       RETURNING *
     `
 
-    const result = await pool.query(query, [...values, ...whereValues])
+    const result = await sql.unsafe(query, [...values, ...whereValues])
 
-    return NextResponse.json({ row: result.rows[0] })
+    return NextResponse.json({ row: result[0] })
   } catch (error) {
     console.error("[v0] Error updating row:", error)
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 })
@@ -74,9 +92,18 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const pool = getPool()
+    if (isPreviewMode()) {
+      return NextResponse.json(
+        {
+          error: "Data editing is disabled in preview mode. Deploy to Vercel to use this feature.",
+        },
+        { status: 400 },
+      )
+    }
 
-    if (!pool) {
+    const sql = getConnection()
+
+    if (!sql) {
       return NextResponse.json({ error: "Database not connected" }, { status: 400 })
     }
 
@@ -95,7 +122,7 @@ export async function DELETE(request: NextRequest) {
       WHERE ${whereClauses}
     `
 
-    await pool.query(query, whereValues)
+    await sql.unsafe(query, whereValues)
 
     return NextResponse.json({ success: true })
   } catch (error) {
