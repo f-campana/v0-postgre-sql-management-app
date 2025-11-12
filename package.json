@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "latest",
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-dropdown-menu": "latest",
+    "@radix-ui/react-label": "latest",
+    "@radix-ui/react-select": "latest",
+    "@radix-ui/react-slot": "latest",
+    "@radix-ui/react-tabs": "latest",
+    "@radix-ui/react-toast": "latest",
     "@types/pg": "^8.11.10",
     "@vercel/analytics": "latest",
     "class-variance-authority": "^0.7.1",
@@ -7,6 +15,7 @@
     "immer": "latest",
     "lucide-react": "^0.454.0",
     "next": "16.0.1",
+    "next-themes": "latest",
     "pg": "latest",
     "pg-native": "latest",
     "react": "19.2.0",
