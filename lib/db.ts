@@ -27,9 +27,13 @@ export function createConnection(config: DatabaseConfig) {
       database: config.database,
       username: config.user,
       password: config.password,
+      ssl: "require", // Require SSL for cloud providers
       max: 10,
       idle_timeout: 30,
-      connect_timeout: 5,
+      connect_timeout: 10,
+      connection: {
+        application_name: "v0-postgres-manager",
+      },
     })
 
     return sql
@@ -52,23 +56,34 @@ export async function testConnection(config: DatabaseConfig): Promise<boolean> {
   let testSql: ReturnType<typeof postgres> | null = null
 
   try {
+    console.log("[v0] Testing connection to:", config.host)
+
     testSql = postgres({
       host: config.host,
       port: config.port,
       database: config.database,
       username: config.user,
       password: config.password,
+      ssl: "require", // Require SSL for cloud providers
       max: 1,
-      connect_timeout: 5,
+      connect_timeout: 10,
+      connection: {
+        application_name: "v0-postgres-manager-test",
+      },
     })
 
-    await testSql`SELECT NOW()`
-    await testSql.end()
+    const result = await testSql`SELECT NOW()`
+    console.log("[v0] Connection test successful:", result)
+    await testSql.end({ timeout: 2 })
     return true
   } catch (error) {
     console.error("[v0] Connection test failed:", error)
     if (testSql) {
-      await testSql.end()
+      try {
+        await testSql.end({ timeout: 2 })
+      } catch (e) {
+        // Ignore cleanup errors
+      }
     }
     return false
   }
