@@ -24,10 +24,10 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[v0] Testing database connection...")
-    const isValid = await testConnection(config)
+    const result = await testConnection(config)
 
-    if (!isValid) {
-      return NextResponse.json({ error: "Failed to connect to database" }, { status: 400 })
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || "Failed to connect to database" }, { status: 400 })
     }
 
     createConnection(config)

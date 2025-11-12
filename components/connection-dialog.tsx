@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { useDatabase } from "@/hooks/use-database"
-import { Loader2, Database } from "lucide-react"
+import { Loader2, Database, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface ConnectionDialogProps {
   open: boolean
@@ -27,6 +28,8 @@ export function ConnectionDialog({ open, onOpenChange }: ConnectionDialogProps) 
     user: "postgres",
     password: "",
   })
+
+  const isSupabasePooler = formData.host.includes("pooler.supabase.com")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -81,11 +84,20 @@ export function ConnectionDialog({ open, onOpenChange }: ConnectionDialogProps) 
           <DialogDescription>Enter your database connection details to get started</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          {isSupabasePooler && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Supabase pooler may not work. Use the direct connection host instead (remove "pooler" from hostname).
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="host">Host</Label>
             <Input
               id="host"
-              placeholder="localhost"
+              placeholder="localhost or db.project.supabase.co"
               value={formData.host}
               onChange={(e) => setFormData({ ...formData, host: e.target.value })}
               required
@@ -106,7 +118,7 @@ export function ConnectionDialog({ open, onOpenChange }: ConnectionDialogProps) 
             <Label htmlFor="database">Database</Label>
             <Input
               id="database"
-              placeholder="mydb"
+              placeholder="postgres"
               value={formData.database}
               onChange={(e) => setFormData({ ...formData, database: e.target.value })}
               required
